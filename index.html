@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Zero-Build Ultra</title>
+    <style>
+        /* CSS variables for light/dark mode */
+        :root {
+            --bg-main: #131314;
+            --bg-sidebar: #1e1f20;
+            --text-main: #e3e3e3;
+            --accent: #4b90ff;
+            --input-bg: #1e1f20;
+            --user-msg-bg: #2b2c2e;
+            --font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Sidebar Layout */
+        aside {
+            width: 280px;
+            background: var(--bg-sidebar);
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+            transition: transform 0.3s ease;
+        }
+
+        .new-chat-btn {
+            background: #28292a;
+            border: none;
+            color: white;
+            padding: 12px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 500;
+            margin-bottom: 2rem;
+            transition: background 0.2s;
+        }
+
+        .new-chat-btn:hover { background: #37393b; }
+
+        /* Main Chat Area */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        header {
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-window {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            scroll-behavior: smooth;
+        }
+
+        /* Message Bubbles */
+        .message {
+            display: flex;
+            gap: 1.5rem;
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+            animation: slideUp 0.4s ease forwards;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .ai .avatar { background: linear-gradient(45deg, #4285f4, #9b72cb); }
+        .user .avatar { background: #5f6368; }
+
+        .content {
+            line-height: 1.6;
+            font-size: 16px;
+            white-space: pre-wrap;
+        }
+
+        .user-bubble {
+            background: var(--user-msg-bg);
+            padding: 0.8rem 1.2rem;
+            border-radius: 18px;
+        }
+
+        /* Input Bar */
+        .input-container {
+            padding: 1rem 2rem 2.5rem;
+            max-width: 850px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .input-wrapper {
+            background: var(--input-bg);
+            border-radius: 30px;
+            padding: 10px 20px;
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+            border: 1px solid transparent;
+            transition: border 0.3s;
+        }
+
+        .input-wrapper:focus-within {
+            border-color: #444;
+        }
+
+        textarea {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 16px;
+            padding: 8px 0;
+            resize: none;
+            outline: none;
+            max-height: 200px;
+        }
+
+        .send-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        .send-btn svg { fill: var(--accent); width: 24px; height: 24px; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-thumb { background: #3c4043; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <aside>
+        <button class="new-chat-btn" onclick="resetChat()">+ New Chat</button>
+        <div style="color: #80868b; font-size: 12px; margin-left: 10px;">Recent</div>
+    </aside>
+
+    <main>
+        <header>
+            <h2 style="font-weight: 400;">Gemini <span style="font-size: 12px; color: var(--accent);">2.0 Clone</span></h2>
+            <div class="user-profile" style="background: #3c4043; padding: 5px 12px; border-radius: 20px; cursor: pointer;">Guest</div>
+        </header>
+
+        <div id="chat-window" class="chat-window">
+            <div id="welcome" style="margin: auto; text-align: center;">
+                <h1 style="font-size: 3rem; margin-bottom: 1rem; background: linear-gradient(to right, #4285f4, #d96570); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Hello, User</h1>
+                <p style="color: #80868b;">How can I help you today?</p>
+            </div>
+        </div>
+
+        <div class="input-container">
+            <div class="input-wrapper">
+                <textarea id="userInput" placeholder="Enter a prompt here" rows="1"></textarea>
+                <button id="sendBtn" class="send-btn" disabled>
+                    <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                </button>
+            </div>
+            <p style="font-size: 11px; text-align: center; color: #80868b; margin-top: 10px;">
+                Gemini can make mistakes, so double-check it.
+            </p>
+        </div>
+    </main>
+
+    <script>
+        const chatWindow = document.getElementById('chat-window');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const welcome = document.getElementById('welcome');
+
+        // State Proxy for reactivity
+        const state = new Proxy({ messages: [] }, {
+            set(target, prop, value) {
+                target[prop] = value;
+                renderLatestMessage();
+                return true;
+            }
+        });
+
+        // Handle Textarea Auto-resize
+        userInput.addEventListener('input', () => {
+            userInput.style.height = 'auto';
+            userInput.style.height = userInput.scrollHeight + 'px';
+            sendBtn.disabled = !userInput.value.trim();
+        });
+
+        // Send Message Logic
+        async function sendMessage() {
+            const text = userInput.value.trim();
+            if (!text) return;
+
+            if (state.messages.length === 0) welcome.style.display = 'none';
+
+            // Add User Message
+            state.messages = [...state.messages, { role: 'user', content: text }];
+            userInput.value = '';
+            userInput.style.height = 'auto';
+            sendBtn.disabled = true;
+
+            // Simulate AI Thinking & Typing
+            simulateAIResponse(text);
+        }
+
+        function renderLatestMessage() {
+            const lastMsg = state.messages[state.messages.length - 1];
+            if (!lastMsg) return;
+
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${lastMsg.role}`;
+            
+            msgDiv.innerHTML = `
+                <div class="avatar">${lastMsg.role === 'ai' ? '✦' : 'U'}</div>
+                <div class="content ${lastMsg.role === 'user' ? 'user-bubble' : ''}">${lastMsg.content}</div>
+            `;
+
+            chatWindow.appendChild(msgDiv);
+            chatWindow.scrollTo({ top: chatWindow.scrollHeight, behavior: 'smooth' });
+        }
+
+        function simulateAIResponse(userQuery) {
+            // AI Response Delay
+            setTimeout(() => {
+                const aiResponse = `I received your prompt: "${userQuery}". \n\nThis is a fully functional UI clone built without any build tools. In a real production scenario, you would connect this to an LLM endpoint (like Google's Generative AI API) using the fetch() API.`;
+                state.messages = [...state.messages, { role: 'ai', content: aiResponse }];
+            }, 800);
+        }
+
+        function resetChat() {
+            state.messages = [];
+            chatWindow.innerHTML = '';
+            chatWindow.appendChild(welcome);
+            welcome.style.display = 'block';
+        }
+
+        // Enter key to send
+        userInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        sendBtn.addEventListener('click', sendMessage);
+    </script>
+</body>
+</html>
