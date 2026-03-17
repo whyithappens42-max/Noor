@@ -3,25 +3,36 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Universal AI Chat</title>
+<title>Noor AI</title>
 
 <style>
 body {
+    margin: 0;
+    font-family: Arial;
+    background: #0b0f19;
+    color: white;
     display: flex;
     height: 100vh;
-    background: #0f0f0f;
-    color: white;
-    font-family: Arial;
 }
 
 /* Sidebar */
 .sidebar {
-    width: 260px;
-    background: #1a1a1a;
+    width: 220px;
+    background: #111827;
     padding: 15px;
 }
 
-button {
+.sidebar h2 {
+    margin-bottom: 20px;
+}
+
+.sidebar button {
+    width: 100%;
+    padding: 10px;
+    background: #2563eb;
+    border: none;
+    color: white;
+    border-radius: 6px;
     cursor: pointer;
 }
 
@@ -32,85 +43,126 @@ button {
     flex-direction: column;
 }
 
+/* Header */
+.header {
+    padding: 15px;
+    background: #0f172a;
+    border-bottom: 1px solid #222;
+}
+
 /* Chat */
-.chat-area {
+.chat {
     flex: 1;
     padding: 20px;
     overflow-y: auto;
 }
 
-.message {
-    margin-bottom: 10px;
-    padding: 10px;
-    border-radius: 10px;
+.msg {
+    margin-bottom: 15px;
     max-width: 70%;
+    padding: 12px;
+    border-radius: 10px;
 }
 
-.user { background: #2563eb; margin-left: auto; }
-.ai { background: #333; }
+.user {
+    background: #2563eb;
+    margin-left: auto;
+}
+
+.ai {
+    background: #1f2937;
+}
 
 /* Input */
-.input-area {
+.input-box {
     display: flex;
-    padding: 10px;
-    background: #1a1a1a;
+    padding: 15px;
+    background: #0f172a;
 }
 
-input {
+.input-box input {
     flex: 1;
-    padding: 10px;
-    border-radius: 6px;
+    padding: 12px;
+    border-radius: 8px;
     border: none;
+    outline: none;
 }
 
-/* Settings Modal */
+.input-box button {
+    margin-left: 10px;
+    padding: 12px 20px;
+    background: #2563eb;
+    border: none;
+    color: white;
+    border-radius: 8px;
+}
+
+/* Modal */
 .modal {
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%,-50%);
-    background: #222;
+    background: #111827;
     padding: 20px;
     border-radius: 10px;
     display: none;
     width: 300px;
+}
+
+.modal input {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
 }
 </style>
 </head>
 
 <body>
 
+<!-- Sidebar -->
 <div class="sidebar">
-    <h2>AI Chat</h2>
+    <h2>Noor AI</h2>
     <button onclick="openSettings()">⚙️ Settings</button>
 </div>
 
+<!-- Main -->
 <div class="main">
-    <div id="chat" class="chat-area"></div>
 
-    <div class="input-area">
-        <input id="input" placeholder="Ask anything...">
-        <button onclick="sendMessage()">Send</button>
+    <div class="header">
+        Universal AI Chat
     </div>
+
+    <div id="chat" class="chat"></div>
+
+    <div class="input-box">
+        <input id="input" placeholder="Type your message...">
+        <button onclick="send()">Send</button>
+    </div>
+
 </div>
 
-<!-- Settings Modal -->
+<!-- Settings -->
 <div id="modal" class="modal">
     <h3>Settings</h3>
 
     <label>API Key</label>
-    <input id="apiKey" type="password"><br><br>
+    <input id="apiKey" type="password">
+
+    <br><br>
 
     <label>Model</label>
-    <input id="model"><br><br>
+    <input id="model" placeholder="openai/gpt-3.5-turbo">
 
-    <button onclick="saveSettings()">Save</button>
+    <br><br>
+
+    <button onclick="save()">Save</button>
 </div>
 
 <script>
 const chat = document.getElementById("chat");
 
-// Load saved settings
+// Load saved
 window.onload = () => {
     document.getElementById("apiKey").value = localStorage.getItem("apiKey") || "";
     document.getElementById("model").value = localStorage.getItem("model") || "openai/gpt-3.5-turbo";
@@ -120,37 +172,38 @@ function openSettings() {
     document.getElementById("modal").style.display = "block";
 }
 
-function saveSettings() {
+function save() {
     localStorage.setItem("apiKey", document.getElementById("apiKey").value);
     localStorage.setItem("model", document.getElementById("model").value);
-    alert("Saved!");
+    alert("Saved ✅");
     document.getElementById("modal").style.display = "none";
 }
 
-function addMessage(text, type) {
+function add(text, type) {
     const div = document.createElement("div");
-    div.className = "message " + type;
+    div.className = "msg " + type;
     div.innerText = text;
     chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
 }
 
-async function sendMessage() {
+async function send() {
     const input = document.getElementById("input");
     const text = input.value.trim();
     if (!text) return;
 
-    addMessage(text, "user");
+    add(text, "user");
     input.value = "";
 
     const apiKey = localStorage.getItem("apiKey");
     const model = localStorage.getItem("model");
 
     if (!apiKey) {
-        addMessage("Please set API Key in settings ⚙️", "ai");
+        add("⚠️ Set API Key in settings", "ai");
         return;
     }
 
-    addMessage("Thinking...", "ai");
+    add("Thinking...", "ai");
 
     try {
         const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -173,9 +226,9 @@ async function sendMessage() {
     }
 }
 
-// Enter support
+// Enter key
 document.getElementById("input").addEventListener("keypress", e => {
-    if (e.key === "Enter") sendMessage();
+    if (e.key === "Enter") send();
 });
 </script>
 
